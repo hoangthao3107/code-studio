@@ -1512,18 +1512,21 @@ function runCode() {
   const frame = document.createElement('iframe');
   frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin');
   frame.style.zIndex = '0';
-  frame.srcdoc = content;
-  host.appendChild(frame);
 
+  // Register the listener before setting srcdoc and before appending.
+  // Setting srcdoc on a detached element queues the navigation; browsers
+  // may fire the load event synchronously during appendChild, so adding
+  // the listener after either of those steps can silently miss it —
+  // leaving the new frame hidden at z-index 0 forever.
   frame.addEventListener('load', () => {
     frame.style.zIndex = '2';
-    // Remove every other iframe, not just the one captured at call-time.
-    // Rapid successive calls can create multiple pending frames; this clears
-    // all of them once the new frame is fully rendered.
     Array.from(host.querySelectorAll('iframe')).forEach(f => {
       if (f !== frame) f.remove();
     });
   }, { once: true });
+
+  host.appendChild(frame);
+  frame.srcdoc = content;
 }
 
 // Auto-run on change

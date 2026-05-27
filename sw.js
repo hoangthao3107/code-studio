@@ -1,7 +1,7 @@
 // ── Studio Service Worker ─────────────────────────────────────────────
 // Bump this version string whenever you deploy an update.
 // The new SW will take over, purge the old cache, and serve fresh files.
-const VERSION = 'studio-v1.1.1';
+const VERSION = 'studio-v1.1.2';
 
 const PRECACHE = [
   './',
