@@ -1124,7 +1124,19 @@ function runCode() {
   dot.classList.add('active');
   setTimeout(() => dot.classList.remove('active'), 1400);
 
-  document.getElementById('preview-frame').srcdoc = buildDoc(html, css, js);
+  const content = buildDoc(html, css, js);
+  const frame   = document.getElementById('preview-frame');
+
+  // Write directly into the existing document to avoid the white-flash
+  // that happens when srcdoc triggers a full iframe navigation.
+  try {
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open();
+    doc.write(content);
+    doc.close();
+  } catch(e) {
+    frame.srcdoc = content;
+  }
 }
 
 // Auto-run on change
