@@ -1513,11 +1513,14 @@ function runCode() {
   frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-popups allow-same-origin');
   frame.style.zIndex = '0';
 
-  // Register the listener before setting srcdoc and before appending.
-  // Setting srcdoc on a detached element queues the navigation; browsers
-  // may fire the load event synchronously during appendChild, so adding
-  // the listener after either of those steps can silently miss it —
-  // leaving the new frame hidden at z-index 0 forever.
+  // Order matters:
+  // 1. srcdoc set while detached → navigation is only *queued*, no load fires yet
+  //    (avoids consuming the listener on an about:blank event from bare append)
+  // 2. listener added
+  // 3. appendChild → queued navigation starts and fires load asynchronously,
+  //    safely after the listener is registered
+  frame.srcdoc = content;
+
   frame.addEventListener('load', () => {
     frame.style.zIndex = '2';
     Array.from(host.querySelectorAll('iframe')).forEach(f => {
@@ -1526,7 +1529,6 @@ function runCode() {
   }, { once: true });
 
   host.appendChild(frame);
-  frame.srcdoc = content;
 }
 
 // Auto-run on change
