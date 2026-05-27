@@ -1517,7 +1517,12 @@ function runCode() {
 
   frame.addEventListener('load', () => {
     frame.style.zIndex = '2';
-    if (prev) prev.remove();
+    // Remove every other iframe, not just the one captured at call-time.
+    // Rapid successive calls can create multiple pending frames; this clears
+    // all of them once the new frame is fully rendered.
+    Array.from(host.querySelectorAll('iframe')).forEach(f => {
+      if (f !== frame) f.remove();
+    });
   }, { once: true });
 }
 
@@ -1873,11 +1878,16 @@ if ('serviceWorker' in navigator) {
     });
   });
 
-  navigator.serviceWorker.addEventListener('controllerchange', () => location.reload());
 }
 
 function applyUpdate() {
-  if (swWaiting) swWaiting.postMessage('SKIP_WAITING');
+  if (swWaiting) {
+    // Only reload when the user explicitly requests the update, not on every
+    // controllerchange (which fires on first SW install and would wipe the
+    // user's work unexpectedly).
+    navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+    swWaiting.postMessage('SKIP_WAITING');
+  }
 }
 
 /* ============================================================
